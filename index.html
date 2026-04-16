@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Tool Preference Survey</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --color-bg: #ffffff;
+      --color-bg-secondary: #f7f7f5;
+      --color-text-primary: #1a1a18;
+      --color-text-secondary: #6b6b66;
+      --color-text-tertiary: #a3a39e;
+      --color-border-tertiary: rgba(0,0,0,0.12);
+      --color-border-secondary: rgba(0,0,0,0.22);
+      --radius-md: 8px;
+      --radius-lg: 12px;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --color-bg: #1c1c1a;
+        --color-bg-secondary: #252523;
+        --color-text-primary: #f0efe9;
+        --color-text-secondary: #a3a39e;
+        --color-text-tertiary: #6b6b66;
+        --color-border-tertiary: rgba(255,255,255,0.1);
+        --color-border-secondary: rgba(255,255,255,0.2);
+      }
+    }
+
+    body {
+      font-family: 'Sora', sans-serif;
+      background: var(--color-bg-secondary);
+      color: var(--color-text-primary);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .card {
+      background: var(--color-bg);
+      border-radius: var(--radius-lg);
+      border: 0.5px solid var(--color-border-tertiary);
+      max-width: 680px;
+      margin: 0 auto;
+      padding: 2.5rem 2rem 3rem;
+    }
+
+    .tag {
+      font-family: 'DM Mono', monospace;
+      font-size: 11px;
+      font-weight: 500;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--color-text-secondary);
+      border: 0.5px solid var(--color-border-secondary);
+      padding: 4px 10px;
+      border-radius: var(--radius-md);
+      display: inline-block;
+      margin-bottom: 1rem;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      line-height: 1.3;
+      margin-bottom: 0.5rem;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: var(--color-text-secondary);
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+
+    .section { margin-bottom: 1.75rem; }
+
+    .section-label {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--color-text-secondary);
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .req {
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: #D85A30;
+      display: inline-block;
+      flex-shrink: 0;
+    }
+
+    .divider {
+      border: none;
+      border-top: 0.5px solid var(--color-border-tertiary);
+      margin: 1.5rem 0;
+    }
+
+    .input-field {
+      width: 100%;
+      border: 0.5px solid var(--color-border-tertiary);
+      border-radius: var(--radius-md);
+      padding: 0.6rem 1rem;
+      font-family: 'Sora', sans-serif;
+      font-size: 14px;
+      color: var(--color-text-primary);
+      background: var(--color-bg);
+      transition: border-color 0.15s;
+    }
+
+    .input-field:focus {
+      outline: none;
+      border-color: #185FA5;
+      box-shadow: 0 0 0 3px rgba(24,95,165,0.08);
+    }
+
+    .tool-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    @media (max-width: 480px) {
+      .tool-grid { grid-template-columns: 1fr; }
+    }
+
+    .tool-card {
+      border: 0.5px solid var(--color-border-tertiary);
+      border-radius: var(--radius-lg);
+      padding: 1rem;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      background: var(--color-bg);
+      position: relative;
+      user-select: none;
+    }
+
+    .tool-card:hover { border-color: var(--color-border-secondary); background: var(--color-bg-secondary); }
+    .tool-card.selected { border: 1.5px solid #185FA5; background: #E6F1FB; }
+    .tool-card.selected .tool-name { color: #185FA5; }
+
+    .tool-icon { font-size: 20px; margin-bottom: 8px; display: block; }
+    .tool-name { font-size: 14px; font-weight: 500; color: var(--color-text-primary); }
+    .tool-desc { font-size: 12px; color: var(--color-text-secondary); margin-top: 2px; line-height: 1.4; }
+
+    .check {
+      position: absolute; top: 10px; right: 10px;
+      width: 18px; height: 18px; border-radius: 50%;
+      border: 1.5px solid var(--color-border-secondary);
+      background: var(--color-bg);
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.15s;
+    }
+
+    .tool-card.selected .check { background: #185FA5; border-color: #185FA5; }
+    .tool-card.selected .check::after {
+      content: '';
+      width: 6px; height: 10px;
+      border: 2px solid white;
+      border-top: none; border-left: none;
+      transform: rotate(45deg) translateY(-2px);
+    }
+
+    .tool-reasons { display: flex; flex-direction: column; gap: 14px; }
+
+    .reason-panel {
+      border: 0.5px solid var(--color-border-tertiary);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: none;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .reason-panel.visible { display: block; }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+    .panel-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 0.5px solid var(--color-border-tertiary);
+      background: var(--color-bg-secondary);
+    }
+
+    .panel-icon { font-size: 16px; }
+    .panel-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); flex: 1; }
+
+    .panel-badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px; padding: 3px 8px;
+      border-radius: 999px;
+      background: #E6F1FB; color: #185FA5;
+      border: 0.5px solid #B5D4F4;
+    }
+
+    .panel-body { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+
+    .text-field {
+      width: 100%;
+      border: 0.5px solid var(--color-border-tertiary);
+      border-radius: var(--radius-md);
+      padding: 0.7rem 1rem;
+      font-family: 'Sora', sans-serif;
+      font-size: 14px;
+      color: var(--color-text-primary);
+      background: var(--color-bg);
+      resize: vertical;
+      transition: border-color 0.15s;
+      line-height: 1.6;
+    }
+
+    .text-field:focus { outline: none; border-color: #185FA5; box-shadow: 0 0 0 3px rgba(24,95,165,0.08); }
+    .text-field::placeholder { color: var(--color-text-tertiary); }
+
+    .field-label { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); margin-bottom: 4px; }
+    .field-group { display: flex; flex-direction: column; }
+    .char-count { font-size: 11px; color: var(--color-text-tertiary); text-align: right; font-family: 'DM Mono', monospace; margin-top: 3px; }
+
+    .not-picking-panel {
+      border: 0.5px solid var(--color-border-tertiary);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: none;
+    }
+
+    .not-picking-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 14px;
+      border-bottom: 0.5px solid var(--color-border-tertiary);
+      background: var(--color-bg-secondary);
+    }
+
+    .not-picking-title { font-size: 13px; font-weight: 500; color: var(--color-text-primary); flex: 1; }
+
+    .not-picking-badge {
+      font-family: 'DM Mono', monospace;
+      font-size: 10px; padding: 3px 8px;
+      border-radius: 999px;
+      background: #FAECE7; color: #993C1D;
+      border: 0.5px solid #F0997B;
+    }
+
+    .not-picking-inner { padding: 14px; display: flex; flex-direction: column; gap: 12px; }
+
+    .empty-state {
+      font-size: 13px; color: var(--color-text-tertiary);
+      text-align: center; padding: 1.5rem;
+      border: 0.5px dashed var(--color-border-secondary);
+      border-radius: var(--radius-lg);
+    }
+
+    .pills { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .pill {
+      border: 0.5px solid var(--color-border-secondary);
+      border-radius: 999px; padding: 6px 14px;
+      font-size: 13px; color: var(--color-text-secondary);
+      cursor: pointer; transition: all 0.15s;
+      background: var(--color-bg); user-select: none;
+    }
+
+    .pill:hover { background: var(--color-bg-secondary); }
+    .pill.active { background: #E6F1FB; border-color: #185FA5; color: #185FA5; font-weight: 500; }
+
+    .priority-section { display: flex; flex-direction: column; gap: 8px; }
+
+    .priority-item {
+      display: flex; align-items: center; gap: 12px;
+      border: 0.5px solid var(--color-border-tertiary);
+      border-radius: var(--radius-md);
+      padding: 10px 14px;
+      background: var(--color-bg);
+    }
+
+    .priority-item label { font-size: 13px; color: var(--color-text-primary); flex: 1; }
+    .star-row { display: flex; gap: 4px; }
+
+    .star {
+      width: 22px; height: 22px; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; opacity: 0.25; transition: opacity 0.1s;
+      color: #BA7517;
+    }
+
+    .star.lit { opacity: 1; }
+
+    .submit-row {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      margin-top: 2rem; gap: 12px;
+    }
+
+    .submit-note { font-size: 12px; color: var(--color-text-secondary); line-height: 1.5; }
+
+    .submit-btn {
+      background: var(--color-text-primary);
+      color: var(--color-bg);
+      border: none; border-radius: var(--radius-md);
+      padding: 10px 28px;
+      font-family: 'Sora', sans-serif;
+      font-size: 14px; font-weight: 500;
+      cursor: pointer; transition: opacity 0.15s; white-space: nowrap;
+    }
+
+    .submit-btn:hover { opacity: 0.85; }
+    .submit-btn:active { transform: scale(0.98); }
+    .submit-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .success-banner {
+      display: none;
+      background: #EAF3DE;
+      border: 0.5px solid #639922;
+      border-radius: var(--radius-lg);
+      padding: 1.25rem 1.5rem;
+      color: #3B6D11;
+      font-size: 14px; font-weight: 500;
+      margin-top: 1.5rem; line-height: 1.5;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <span class="tag">Team resource survey</span>
+    <h1>Which AI tools do you want to keep using?</h1>
+    <p class="subtitle">You've tried all three. Now tell us which ones you want access to — and make a case for each. Be specific; vague answers won't be considered.</p>
+
+    <div class="section">
+      <div class="section-label"><span class="req"></span> Your name</div>
+      <input class="input-field" type="text" id="name" placeholder="e.g. Sara Ahmed" />
+    </div>
+
+    <hr class="divider" />
+
+    <div class="section">
+      <div class="section-label"><span class="req"></span> Which tools do you want? (pick your preferred combo)</div>
+      <div class="tool-grid">
+        <div class="tool-card" data-tool="chatgpt" onclick="toggleTool(this)">
+          <div class="check"></div>
+          <span class="tool-icon">🤖</span>
+          <div class="tool-name">ChatGPT / GPT-4</div>
+          <div class="tool-desc">OpenAI</div>
+        </div>
+        <div class="tool-card" data-tool="claude" onclick="toggleTool(this)">
+          <div class="check"></div>
+          <span class="tool-icon">✦</span>
+          <div class="tool-name">Claude</div>
+          <div class="tool-desc">Anthropic</div>
+        </div>
+        <div class="tool-card" data-tool="cursor" onclick="toggleTool(this)">
+          <div class="check"></div>
+          <span class="tool-icon">⌨</span>
+          <div class="tool-name">Cursor</div>
+          <div class="tool-desc">AI code editor</div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <div class="section">
+      <div class="section-label"><span class="req"></span> Make your case — why each tool you selected?</div>
+      <div class="tool-reasons" id="tool-reasons">
+        <div class="empty-state" id="empty-state">Select tools above to explain your case for each one.</div>
+
+        <div class="reason-panel" id="panel-chatgpt">
+          <div class="panel-header">
+            <span class="panel-icon">🤖</span>
+            <span class="panel-title">ChatGPT / GPT-4</span>
+            <span class="panel-badge">Required</span>
+          </div>
+          <div class="panel-body">
+            <div class="field-group">
+              <div class="field-label">Why do you prefer ChatGPT over the others for certain tasks?</div>
+              <textarea class="text-field" id="why-chatgpt" rows="3" placeholder="What does it do better than Claude or Cursor for your work? Be specific about the tasks." maxlength="600" oninput="updateCount(this,'cnt-chatgpt')"></textarea>
+              <div class="char-count"><span id="cnt-chatgpt">0</span> / 600</div>
+            </div>
+            <div class="field-group">
+              <div class="field-label">What specific tasks or workflows would you use it for?</div>
+              <textarea class="text-field" id="use-chatgpt" rows="2" placeholder="Daily tasks, recurring workflows, specific features you rely on…" maxlength="400" oninput="updateCount(this,'cnt-use-chatgpt')"></textarea>
+              <div class="char-count"><span id="cnt-use-chatgpt">0</span> / 400</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="reason-panel" id="panel-claude">
+          <div class="panel-header">
+            <span class="panel-icon">✦</span>
+            <span class="panel-title">Claude</span>
+            <span class="panel-badge">Required</span>
+          </div>
+          <div class="panel-body">
+            <div class="field-group">
+              <div class="field-label">Why do you prefer Claude over the others for certain tasks?</div>
+              <textarea class="text-field" id="why-claude" rows="3" placeholder="What does it do better than ChatGPT or Cursor for your work? Be specific about the tasks." maxlength="600" oninput="updateCount(this,'cnt-claude')"></textarea>
+              <div class="char-count"><span id="cnt-claude">0</span> / 600</div>
+            </div>
+            <div class="field-group">
+              <div class="field-label">What specific tasks or workflows would you use it for?</div>
+              <textarea class="text-field" id="use-claude" rows="2" placeholder="Daily tasks, recurring workflows, specific features you rely on…" maxlength="400" oninput="updateCount(this,'cnt-use-claude')"></textarea>
+              <div class="char-count"><span id="cnt-use-claude">0</span> / 400</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="reason-panel" id="panel-cursor">
+          <div class="panel-header">
+            <span class="panel-icon">⌨</span>
+            <span class="panel-title">Cursor</span>
+            <span class="panel-badge">Required</span>
+          </div>
+          <div class="panel-body">
+            <div class="field-group">
+              <div class="field-label">Why do you prefer Cursor over the others for certain tasks?</div>
+              <textarea class="text-field" id="why-cursor" rows="3" placeholder="What does it do better than ChatGPT or Claude for your work? Be specific about the tasks." maxlength="600" oninput="updateCount(this,'cnt-cursor')"></textarea>
+              <div class="char-count"><span id="cnt-cursor">0</span> / 600</div>
+            </div>
+            <div class="field-group">
+              <div class="field-label">What specific tasks or workflows would you use it for?</div>
+              <textarea class="text-field" id="use-cursor" rows="2" placeholder="Daily tasks, recurring workflows, specific features you rely on…" maxlength="400" oninput="updateCount(this,'cnt-use-cursor')"></textarea>
+              <div class="char-count"><span id="cnt-use-cursor">0</span> / 400</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider" id="not-picking-divider" style="display:none;" />
+
+    <div class="section" id="not-picking-section" style="display:none;">
+      <div class="not-picking-panel" id="not-picking-panel">
+        <div class="not-picking-header">
+          <span class="panel-icon">👎</span>
+          <span class="not-picking-title">Tools you're not picking</span>
+          <span class="not-picking-badge">Tell us why not</span>
+        </div>
+        <div class="not-picking-inner" id="not-picking-inner"></div>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <div class="section">
+      <div class="section-label">What will you use these tools for day-to-day?</div>
+      <div class="pills">
+        <span class="pill" onclick="togglePill(this)">Writing &amp; drafting</span>
+        <span class="pill" onclick="togglePill(this)">Code generation</span>
+        <span class="pill" onclick="togglePill(this)">Code review</span>
+        <span class="pill" onclick="togglePill(this)">Debugging</span>
+        <span class="pill" onclick="togglePill(this)">Documentation</span>
+        <span class="pill" onclick="togglePill(this)">Research &amp; summarizing</span>
+        <span class="pill" onclick="togglePill(this)">Brainstorming</span>
+        <span class="pill" onclick="togglePill(this)">Data analysis</span>
+        <span class="pill" onclick="togglePill(this)">Email / communication</span>
+        <span class="pill" onclick="togglePill(this)">Learning &amp; upskilling</span>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <div class="section">
+      <div class="section-label">How important are the following to you?</div>
+      <div class="priority-section">
+        <div class="priority-item"><label>Speed of output</label><div class="star-row"><span class="star" onclick="rateStar(this)">★</span><span class="star" onclick="rateStar(this)">★</span><span class="star" onclick="rateStar(this)">★</span><span class="star" onclick="rateStar(this)">★</span><span class="star" onclick="rateStar(this)">★</span></div></div>
+        <div class="priority-item"><label>Code-specific capabilities</label><div class="star-row"><span class="star" onclick="rateStar(this)">★</span><span class="star" onclick="rateStar(this)">★</span><span class="star" onclick="rateStar(this)">★</span><span class="star" onclick="rateStar(this)">★</span><span class="star" onclick="rateStar(this)">★</span></div></div>
+        <div class="priority-item"><label>Integration into existing tools</label><div class="star-row"><span class="star" onclick="rateStar(this)">★</span><span class="star" onclick="rateStar(this)">★</span><span class="star" onclick="rateStar(this)">★</span><span class="star" onclick="rateStar(this)">★</span><span class="star" onclick="rateStar(this)">★</span></div></div>
+        <div class="priority-item"><label>Data privacy / security</label><div class="star-row"><span class="star" onclick="rateStar(this)">★</span><span class="star" onclick="rateStar(this)">★</span><span class="star" onclick="rateStar(this)">★</span><span class="star" onclick="rateStar(this)">★</span><span class="star" onclick="rateStar(this)">★</span></div></div>
+        <div class="priority-item"><label>Cost to the team</label><div class="star-row"><span class="star" onclick="rateStar(this)">★</span><span class="star" onclick="rateStar(this)">★</span><span class="star" onclick="rateStar(this)">★</span><span class="star" onclick="rateStar(this)">★</span><span class="star" onclick="rateStar(this)">★</span></div></div>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <div class="section">
+      <div class="section-label">Any other concerns or blockers?</div>
+      <textarea class="text-field" id="concerns" rows="3" placeholder="Licensing, cost approval, security policy, team adoption…" maxlength="500" oninput="updateCount(this,'cnt-concerns')"></textarea>
+      <div class="char-count"><span id="cnt-concerns">0</span> / 500</div>
+    </div>
+
+    <div class="submit-row">
+      <p class="submit-note">Responses reviewed<br>by the team lead.</p>
+      <button class="submit-btn" onclick="submitForm()">Submit response ↗</button>
+    </div>
+
+    <div class="success-banner" id="success-banner">
+      ✓ Response submitted! Thank you — your input has been recorded and will be reviewed.
+    </div>
+  </div>
+
+  <script>
+    const tools = {
+      chatgpt: { label: 'ChatGPT / GPT-4', icon: '🤖' },
+      claude:  { label: 'Claude', icon: '✦' },
+      cursor:  { label: 'Cursor', icon: '⌨' }
+    };
+
+    function getSelected() {
+      return Array.from(document.querySelectorAll('.tool-card.selected')).map(c => c.dataset.tool);
+    }
+
+    function toggleTool(card) {
+      card.classList.toggle('selected');
+      updatePanels();
+    }
+
+    function updatePanels() {
+      const selected = getSelected();
+      const notSelected = Object.keys(tools).filter(t => !selected.includes(t));
+      const empty = document.getElementById('empty-state');
+
+      empty.style.display = selected.length === 0 ? 'block' : 'none';
+
+      Object.keys(tools).forEach(t => {
+        document.getElementById('panel-' + t).classList.toggle('visible', selected.includes(t));
+      });
+
+      const npSection = document.getElementById('not-picking-section');
+      const npDivider = document.getElementById('not-picking-divider');
+      const npInner = document.getElementById('not-picking-inner');
+
+      if (notSelected.length > 0 && selected.length > 0) {
+        npSection.style.display = 'block';
+        npDivider.style.display = 'block';
+        npInner.innerHTML = '';
+        notSelected.forEach(t => {
+          const div = document.createElement('div');
+          div.className = 'field-group';
+          div.innerHTML = `
+            <div class="field-label">${tools[t].icon} What put you off ${tools[t].label}?</div>
+            <textarea class="text-field" id="notpick-${t}" rows="2"
+              placeholder="What didn't work for you? Limitations, frustrations, gaps in your workflow…"
+              maxlength="400" oninput="updateCount(this,'cnt-notpick-${t}')"></textarea>
+            <div class="char-count"><span id="cnt-notpick-${t}">0</span> / 400</div>`;
+          npInner.appendChild(div);
+        });
+      } else {
+        npSection.style.display = 'none';
+        npDivider.style.display = 'none';
+      }
+    }
+
+    function togglePill(el) { el.classList.toggle('active'); }
+
+    function rateStar(star) {
+      const stars = star.parentElement.querySelectorAll('.star');
+      const idx = Array.from(stars).indexOf(star);
+      stars.forEach((s, i) => s.classList.toggle('lit', i <= idx));
+    }
+
+    function updateCount(el, id) {
+      const counter = document.getElementById(id);
+      if (counter) counter.textContent = el.value.length;
+    }
+
+    const SHEET_URL = 'https://script.google.com/macros/s/AKfycbx7RIvKZLDZk7SIaNKTqeypbcclwEjilLVMOdlRIui423-hMnfaAHJdu6yW8MUA-LtAig/exec';
+
+    function submitForm() {
+      const name = document.getElementById('name').value.trim();
+      const selected = getSelected();
+
+      if (!name) { alert('Please enter your name and role.'); return; }
+      if (selected.length === 0) { alert('Please select at least one tool.'); return; }
+
+      const missing = [];
+      selected.forEach(t => {
+        const why = document.getElementById('why-' + t);
+        if (!why || why.value.trim().length < 20) missing.push(tools[t].label);
+      });
+
+      if (missing.length > 0) {
+        alert('Please explain your preference for: ' + missing.join(', ') + ' (at least 20 characters each).');
+        return;
+      }
+
+      const notSelected = Object.keys(tools).filter(t => !selected.includes(t));
+      const notPickingReasons = notSelected.map(t => {
+        const el = document.getElementById('notpick-' + t);
+        return el && el.value.trim() ? `${tools[t].label}: ${el.value.trim()}` : '';
+      }).filter(Boolean).join(' | ');
+
+      const activePills = Array.from(document.querySelectorAll('.pill.active')).map(p => p.textContent).join(', ');
+
+      const getStars = (label) => {
+        const rows = document.querySelectorAll('.priority-item');
+        for (const row of rows) {
+          if (row.querySelector('label').textContent.trim() === label) {
+            return row.querySelectorAll('.star.lit').length;
+          }
+        }
+        return 0;
+      };
+
+      const payload = {
+        name,
+        tools: selected.map(t => tools[t].label).join(', '),
+        why_chatgpt:   (document.getElementById('why-chatgpt')  || {value:''}).value.trim(),
+        use_chatgpt:   (document.getElementById('use-chatgpt')  || {value:''}).value.trim(),
+        why_claude:    (document.getElementById('why-claude')   || {value:''}).value.trim(),
+        use_claude:    (document.getElementById('use-claude')   || {value:''}).value.trim(),
+        why_cursor:    (document.getElementById('why-cursor')   || {value:''}).value.trim(),
+        use_cursor:    (document.getElementById('use-cursor')   || {value:''}).value.trim(),
+        not_picking:   notPickingReasons,
+        daily_uses:    activePills,
+        priority_speed:       getStars('Speed of output'),
+        priority_code:        getStars('Code-specific capabilities'),
+        priority_integration: getStars('Integration into existing tools'),
+        priority_privacy:     getStars('Data privacy / security'),
+        priority_cost:        getStars('Cost to the team'),
+        concerns: (document.getElementById('concerns') || {value:''}).value.trim()
+      };
+
+      const btn = document.querySelector('.submit-btn');
+      btn.disabled = true;
+      btn.textContent = 'Sending…';
+
+      fetch(SHEET_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      })
+      .then(() => {
+        btn.textContent = 'Submitted';
+        const banner = document.getElementById('success-banner');
+        banner.style.display = 'block';
+        banner.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      })
+      .catch(() => {
+        btn.disabled = false;
+        btn.textContent = 'Submit response ↗';
+        alert('Something went wrong. Please try again.');
+      });
+    }
+  </script>
+</body>
+</html>
